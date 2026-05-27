@@ -4,193 +4,239 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from auth import check_login
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="Smart Product Recommender",
-    page_icon="🛍️",
-    layout="wide"
-)
-
-# ---------------- CUSTOM CSS ----------------
-st.markdown("""
-<style>
-.main {
-    background-color: #f5f7fa;
-}
-
-.stButton>button {
-    width: 100%;
-    border-radius: 10px;
-    background-color: #ff9900;
-    color: white;
-    font-weight: bold;
-    border: none;
-    padding: 10px;
-}
-
-.stButton>button:hover {
-    background-color: #e68a00;
-}
-
-.product-card {
-    background-color: white;
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-    margin-bottom: 20px;
-}
-
-.title-text {
-    text-align: center;
-    font-size: 40px;
-    font-weight: bold;
-    color: #232f3e;
-}
-
-.subtitle {
-    text-align: center;
-    color: gray;
-    margin-bottom: 30px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# ---------------- LOGIN STATE ----------------
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-# ---------------- LOGIN PAGE ----------------
-def login_page():
-
-    st.markdown('<p class="title-text">🛍️ Smart Product Recommender</p>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitle">AI-Powered Recommendation System</p>', unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([1,2,1])
-
-    with col2:
-        st.subheader("🔐 Login")
-
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-
-        if st.button("Login"):
-            if check_login(username, password):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.success("Login Successful 🎉")
-                st.rerun()
-            else:
-                st.error("Invalid Username or Password ❌")
+# ---------------- CONFIG ----------------
+st.set_page_config(page_title="Startup Ecommerce MVP", layout="wide")
 
 # ---------------- LOAD DATA ----------------
-df = pd.read_csv("products.csv")
+df = pd.read_csv("products.csv").dropna()
 df.columns = df.columns.str.strip()
 
-# ---------------- SIDEBAR FILTERS ----------------
-category_filter = st.sidebar.selectbox(
-    "📂 Filter by Category",
-    ["All"] + list(df["category"].unique())
-)
-
-max_price = int(df["price"].max())
-price_filter = st.sidebar.slider(
-    "💰 Maximum Price",
-    0,
-    max_price,
-    max_price
-)
-
-# ---------------- ML MODEL ----------------
-df["combined"] = df["category"] + " " + df["features"] + " " + df["name"]
+df["combined"] = df["name"] + " " + df["category"] + " " + df["features"]
+df["name_lower"] = df["name"].str.lower()
 
 vectorizer = TfidfVectorizer()
 matrix = vectorizer.fit_transform(df["combined"])
 similarity = cosine_similarity(matrix)
 
-df["name_lower"] = df["name"].str.lower()
+# ---------------- SESSION STATE ----------------
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-# ---------------- RECOMMEND FUNCTION ----------------
-def recommend(product):
+if "user" not in st.session_state:
+    st.session_state.user = ""
+
+if "cart" not in st.session_state:
+    st.session_state.cart = []
+
+if "orders" not in st.session_state:
+    st.session_state.orders = []
+
+# ---------------- CART SAFE ADD ----------------
+def add_to_cart(item):
+    cart = st.session_state.get("cart", [])
+    st.session_state.cart = cart + [item]
+
+# ---------------- UTIL ----------------
+def get_suggestions(query):
+    if not query:
+        return []
+    return df[df["name_lower"].str.contains(query.lower())]["name"].head(5).tolist()
+
+def recommend(product, category, price_limit):
 
     product = product.lower().strip()
 
     match = df[df["name_lower"].str.contains(product)]
 
     if match.empty:
-        return None
+        return []
 
     idx = match.index[0]
 
-    scores = list(enumerate(similarity[idx]))
-    scores = sorted(scores, key=lambda x: x[1], reverse=True)
+    scores = sorted(list(enumerate(similarity[idx])), key=lambda x: x[1], reverse=True)
 
-    recommendations = []
+    results = []
 
-    for i in scores[1:10]:
+    for i, _ in scores[1:50]:
 
-        item = df.iloc[i[0]]
+        item = df.iloc[i]
 
-        if category_filter != "All":
-            if item["category"] != category_filter:
-                continue
-
-        if item["price"] > price_filter:
+        if category != "All" and item["category"] != category:
             continue
 
-        recommendations.append(item)
+        if item["price"] > price_limit:
+            continue
 
-    return recommendations
+        results.append(item)
 
-# ---------------- MAIN APP ----------------
-def recommender_app():
+        if len(results) == 12:
+            break
 
-    st.markdown('<p class="title-text">🛍️ Smart Product Recommender</p>', unsafe_allow_html=True)
-    st.markdown(f'<p class="subtitle">Welcome {st.session_state.username} 👋</p>', unsafe_allow_html=True)
+    return results
 
-    search = st.text_input(
-        "🔎 Search Product",
-        placeholder="Try: iphone, samsung, macbook"
-    )
+# ---------------- LOGIN ----------------
+def login_page():
 
-    if st.button("Recommend Products"):
+    st.title("🛍️ Startup Ecommerce MVP")
 
-        results = recommend(search)
+    tab1, tab2 = st.tabs(["Login", "Sign Up"])
 
-        if results:
+    with tab1:
+        u = st.text_input("Username")
+        p = st.text_input("Password", type="password")
 
-            st.subheader("🔥 Recommended Products")
+        if st.button("Login"):
+            if check_login(u, p):
+                st.session_state.logged_in = True
+                st.session_state.user = u
+                st.rerun()
+            else:
+                st.error("Invalid credentials")
 
-            cols = st.columns(2)
+    with tab2:
+        nu = st.text_input("New Username")
+        np = st.text_input("New Password", type="password")
 
-            for index, r in enumerate(results):
+        if st.button("Create Account"):
+            users = pd.read_csv("users.csv")
 
-                with cols[index % 2]:
+            if nu in users["username"].values:
+                st.warning("User already exists")
+            else:
+                users.loc[len(users)] = [nu, np]
+                users.to_csv("users.csv", index=False)
+                st.success("Account created")
 
-                    st.markdown('<div class="product-card">', unsafe_allow_html=True)
+# ---------------- HOME ----------------
+def home_page():
 
-                    st.image(r["image"], use_container_width=True)
+    st.markdown(f"## 👋 Welcome {st.session_state.user}")
 
-                    st.markdown(f"## {r['name']}")
-                    st.markdown(f"⭐ Rating: **{r['rating']}**")
-                    st.markdown(f"💰 Price: **₹{r['price']}**")
-                    st.markdown(f"📦 Category: **{r['category']}**")
-                    st.markdown(f"📝 {r['features']}")
+    category = st.sidebar.selectbox("Category", ["All"] + list(df["category"].unique()))
+    price_limit = st.sidebar.slider("Max Price", 0, int(df["price"].max()), int(df["price"].max()))
 
-                    st.button("🛒 Buy Now", key=r['name'])
+    search = st.text_input("🔎 Search products")
 
-                    st.markdown('</div>', unsafe_allow_html=True)
+    if search:
+        st.caption(f"Showing results for: {search}")
 
-        else:
-            st.error("Product not found ❌")
+    suggestions = get_suggestions(search)
 
-    st.sidebar.markdown("---")
+    if suggestions:
+        st.write("### Suggestions")
+
+        for s in suggestions:
+            if st.button(s, key="sugg_" + s):
+                search = s
+
+    if st.button("Get Recommendations"):
+
+        results = recommend(search, category, price_limit)
+
+        if not results:
+            st.warning("No products found")
+            return
+
+        st.subheader("🔥 Recommended Products")
+
+        cols = st.columns(4)
+
+        for i, r in enumerate(results):
+
+            with cols[i % 4]:
+
+                st.image(r["image"], use_container_width=True)
+
+                st.markdown(f"### {r['name']}")
+                st.markdown(f"⭐ {r['rating']} / 5")
+                st.markdown(f"💰 ₹{r['price']}")
+                st.caption(r["features"])
+
+                if st.button("🛒 Add to Cart", key="cart_" + str(r["name"]) + str(i)):
+                    add_to_cart(r)
+                    st.toast("Added to cart 🛒")
+                    st.rerun()
+
+# ---------------- CART ----------------
+def cart_page():
+
+    st.subheader("🛒 Your Cart")
+
+    cart = st.session_state.get("cart", [])
+
+    if len(cart) == 0:
+        st.info("Cart is empty")
+        return
+
+    total = 0
+
+    for i, item in enumerate(cart):
+
+        col1, col2 = st.columns([3, 1])
+
+        with col1:
+            st.write(f"**{item['name']}** - ₹{item['price']}")
+
+        with col2:
+            if st.button("Remove", key="rm_" + str(i)):
+                st.session_state.cart.pop(i)
+                st.rerun()
+
+        total += item["price"]
+
+    st.markdown(f"### Total: ₹{total}")
+
+    if st.button("Proceed to Checkout"):
+
+        st.session_state.orders.append({
+            "items": cart.copy(),
+            "total": total
+        })
+
+        st.session_state.cart = []
+        st.success("Order placed 🎉")
+        st.rerun()
+
+# ---------------- ORDERS ----------------
+def orders_page():
+
+    st.subheader("📦 Orders")
+
+    if not st.session_state.orders:
+        st.info("No orders yet")
+        return
+
+    for i, order in enumerate(st.session_state.orders):
+
+        st.markdown(f"### Order {i+1}")
+        st.write(f"Total: ₹{order['total']}")
+
+        for item in order["items"]:
+            st.write(f"- {item['name']}")
+
+        st.markdown("---")
+
+# ---------------- ROUTER ----------------
+def app():
+
+    menu = st.sidebar.radio("Navigation", ["Home", "Cart", "Orders"])
+
+    if menu == "Home":
+        home_page()
+
+    elif menu == "Cart":
+        cart_page()
+
+    elif menu == "Orders":
+        orders_page()
 
     if st.sidebar.button("Logout"):
         st.session_state.logged_in = False
+        st.session_state.cart = []
         st.rerun()
 
-# ---------------- ROUTING ----------------
+# ---------------- MAIN ----------------
 if not st.session_state.logged_in:
     login_page()
 else:
-    recommender_app()
+    app()
