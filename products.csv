@@ -1,10 +1,15 @@
-name,category,features
-iPhone 13,phone,apple ios camera premium
-iPhone 14,phone,apple ios camera premium
-Samsung S23,phone,android camera premium fast
-OnePlus 11,phone,android fast performance gaming
-MacBook Air,laptop,apple macos lightweight battery
-Dell Inspiron,laptop,windows performance budget
-HP Pavilion,laptop,windows gaming performance
-Sony Headphones,audio,wireless bluetooth noise cancelling
-Boat Headphones,audio,wireless budget bass
+name,category,price,rating,image,features
+iPhone 13,Phone,64999,4.6,https://images.unsplash.com/photo-1603891128711-11b4b03bb138,apple ios camera premium
+iPhone 14,Phone,79999,4.8,https://images.unsplash.com/photo-1678685888221-cda773a3dcdb,apple ios camera premium
+Samsung S23,Phone,74999,4.7,https://images.unsplash.com/photo-1610945265064-0e34e5519bbf,android camera premium fast
+OnePlus 11,Phone,56999,4.5,https://images.unsplash.com/photo-1616348436168-de43ad0db179,android fast performance gaming
+MacBook Air,Laptop,99999,4.8,https://images.unsplash.com/photo-1517336714739-489689fd1ca8,apple macos lightweight battery
+Dell Inspiron,Laptop,65000,4.3,https://images.unsplash.com/photo-1496181133206-80ce9b88a853,windows performance budget
+HP Pavilion,Laptop,72000,4.4,https://images.unsplash.com/photo-1518770660439-4636190af475,windows gaming performance
+Sony Headphones,Audio,24999,4.7,https://images.unsplash.com/photo-1505740420928-5e560c06d30e,wireless bluetooth noise cancelling
+Boat Headphones,Audio,1999,4.2,https://images.unsplash.com/photo-1484704849700-f032a568e944,wireless budget bass
+iPad Air,Tablet,59999,4.7,https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0,apple tablet productivity entertainment
+Samsung Galaxy Tab,Tablet,45999,4.5,https://images.unsplash.com/photo-1585790050230-5dd28404ccb9,android tablet multimedia gaming
+Asus ROG Laptop,Laptop,125000,4.8,https://images.unsplash.com/photo-1593642702821-c8da6771f0c6,gaming laptop high performance rgb
+JBL Speaker,Audio,6999,4.4,https://images.unsplash.com/photo-1545454675-3531b543be5d,bluetooth speaker bass portable
+Nothing Phone 2,Phone,44999,4.5,https://images.unsplash.com/photo-1511707171634-5f897ff02aa9,android premium transparent design
