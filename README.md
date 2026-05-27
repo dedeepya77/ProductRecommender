@@ -43,8 +43,3 @@ This project simulates a **mini e-commerce platform** with features like login/s
 - Pandas 📊
 - Scikit-learn 🤖
 - HTML/CSS (via Streamlit components)
-
----
-
-
-## 📂 Project Structure
