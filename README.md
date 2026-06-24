@@ -6,11 +6,6 @@ This project simulates a **mini e-commerce platform** with features like login/s
 
 ---
 
-## 🌐 Live Demo
-👉 https://appuctrecommender-8ttav7aojsu7bx6plm9igv.streamlit.app/
-
----
-
 ## 📌 Features
 
 ### 🧠 AI Recommendation System
